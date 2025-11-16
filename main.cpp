@@ -4,19 +4,20 @@
 
 const char* vertexShaderSource = "#version 330 core\n"
 "layout (location = 0) in vec3 aPos;\n"
-"out vec4 vertexColor;"
+"layout (location = 1) in vec3 aColor;\n"
+"out vec3 ourColor;"
 "void main()\n"
 "{\n"
-    "gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-    "vertexColor = vec4(0.5, 0.0, 0.0, 1.0);\n"
+    "gl_Position = vec4(aPos, 1.0);\n"
+    "ourColor = aColor;\n"
 "}\0";
 
 const char* fragmentShaderSource = "#version 330 core\n"
 "out vec4 FragColor;\n"
-"in vec4 vertexColor;\n"
+"in vec3 ourColor;\n"
 "void main()\n"
 "{\n"
-"FragColor = vertexColor; \n"
+"FragColor = vec4(ourColor, 1.0); \n"
 "}\n";
 
 const char* fragmentShaderSource2 = "#version 330 core\n"
@@ -99,7 +100,7 @@ int main() {
 
     unsigned int fragmentShader2;
     fragmentShader2 = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader2, 1, &fragmentShaderSource2, NULL);
+    glShaderSource(fragmentShader2, 1, &fragmentShaderSource, NULL);
     glCompileShader(fragmentShader2);
     // check for fragment error
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
@@ -148,14 +149,12 @@ int main() {
 
     float verticies2[] = {
       
-        0.0, -0.5f, 0.0f, // bot left
-        -0.5f, 0.5f, 0.0f, // top left
-        0.5f, 0.5f, 0.0f, // middle
+        0.0, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,// bot left
+        -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.1f, // top left
+        0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f// middle
     };
 
-    unsigned int indices2[] = {
-        0, 1, 2, 
-    };
+
 
     int nrAttributes;
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
@@ -186,8 +185,10 @@ int main() {
     glBindBuffer(GL_ARRAY_BUFFER, VBOs[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(verticies2), verticies2, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     // unbind since AttribPointer registered VBO as the vertex attribute's bound buffer object
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -206,9 +207,12 @@ int main() {
 
         float timeValue = glfwGetTime();
         float redValue = (sin(timeValue) / 2.0f) + 0.5f;
+        float greenValue = (cos(timeValue) / 3.0f) + 0.7f;
+        float blueValue = (sin(timeValue) / 6.0f) + 0.1f;
+
         int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
         glUseProgram(shaderProgram);
-        glUniform4f(vertexColorLocation, redValue, 0.0F, 0.0f, 1.0f);
+        glUniform4f(vertexColorLocation, redValue, greenValue, blueValue, 1.0f);
 
         glBindVertexArray(VAOs[0]);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
